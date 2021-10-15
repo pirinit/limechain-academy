@@ -4,7 +4,7 @@ import "./Ownable.sol";
 
 contract Library is Ownable {
 	struct Book {
-	    uint32 id;
+	    uint256 id;
 		uint16 totalCopies;
 		uint16 freeCopies;
 		string name;
@@ -12,15 +12,19 @@ contract Library is Ownable {
 	
 	Book[] private books;
 	
+	
+	//is it better to have these 2 collections in the Book entity itself?
 	//mapping for borrowers - current
+	mapping(uint256 => mapping(address => bool)) private currentBorrowers;
 	//mapping for borrowers - all time/history
+	mapping(uint256 => address[]) private allTimeBorrowers;
 	
 	function addBook(string calldata name, uint16 copiesCount) public onlyOwner returns(uint) {
 		// do we care about duplicate names
 		// check copies to be positive number
 		require(copiesCount > 0, "copiesCounts should be positive integer.");
 		// create and add new book instance
-		uint32 newBookId =  uint32(books.length);
+		uint256 newBookId =  books.length;
 		Book memory newBook = Book(newBookId,copiesCount, copiesCount, name);
 		books.push(newBook);
 		
@@ -36,8 +40,23 @@ contract Library is Ownable {
 	}
 	
 	function borrowBook(uint32 _bookId) public {
+	    // what if there is no such book? indexOutOfRange exception?
+	    Book storage book = books[_bookId];
+	    
+	    // check if there are free books to borrow
+	    // better error message, add the actual book name and Id?
+	    require(book.freeCopies > 0, "Can not borrow this book right now, there are no free copies.");
+		
 		// check if current user has borrowed this particular book
-		// check if there are free books to borrow
+		require(currentBorrowers[_bookId][msg.sender] == false, "You have already borrowed this book.");
+		
+		//mark the book as borrowerd
+		book.freeCopies--;
+		currentBorrowers[_bookId][msg.sender] = true;
+		
+		// what if a given user borrows a book for a second time? currently there will be an entry for every act of borrowing
+		allTimeBorrowers[_bookId].push(msg.sender);
+		
 	}
 	
 	function returnBook(uint32 _bookId) public {
@@ -45,5 +64,7 @@ contract Library is Ownable {
 	}
 	
 	function listBorrowers(uint32 _bookId) public view returns(address[] memory) {
+	    
+	    return allTimeBorrowers[_bookId];
 	}
 }
