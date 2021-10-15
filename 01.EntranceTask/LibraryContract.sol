@@ -61,9 +61,13 @@ contract Library is Ownable {
 	
 	function returnBook(uint32 _bookId) public {
 		// check if current user has borrowed this particular book
+		require(currentBorrowers[_bookId][msg.sender] == true, "You havne't borrowed this book.");
+		
+		books[_bookId].freeCopies++;
+		currentBorrowers[_bookId][msg.sender] = false;
 	}
 	
-	function listBorrowers(uint32 _bookId) public view returns(address[] memory) {
+	function listAllTimeBorrowers(uint32 _bookId) public view returns(address[] memory) {
 	    
 	    return allTimeBorrowers[_bookId];
 	}
