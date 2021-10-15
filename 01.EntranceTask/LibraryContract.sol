@@ -14,15 +14,17 @@ contract Library is Ownable {
 	
 	
 	//is it better to have these 2 collections in the Book entity itself?
+	//is it efficient to have mapping inside another mapping?
+	//how and when does the mappings/arrays get initialized?
 	//mapping for borrowers - current
 	mapping(uint256 => mapping(address => bool)) private currentBorrowers;
 	//mapping for borrowers - all time/history
 	mapping(uint256 => address[]) private allTimeBorrowers;
 	
 	function addBook(string calldata name, uint16 copiesCount) public onlyOwner returns(uint) {
-		// do we care about duplicate names
+		// do we care about duplicated names
 		// check copies to be positive number
-		require(copiesCount > 0, "copiesCounts should be positive integer.");
+		require(copiesCount > 0, "copiesCount should be positive integer.");
 		// create and add new book instance
 		uint256 newBookId =  books.length;
 		Book memory newBook = Book(newBookId,copiesCount, copiesCount, name);
@@ -33,9 +35,9 @@ contract Library is Ownable {
 	
 	function listAllBooks() public view returns(Book[] memory) {
 		//what about paging? how big "responses" can we have?
-		//filter out books with no freeCopies - or maybe have a paramater do we want to see them?
+		//filter out books with no freeCopies - or maybe have a paramater if we want to see them?
 		
-		// it is not ok to return the private storage of books to the public... we need a view model here?
+		// it is not ok to return the private storage of books to the public... maybe we need a view model here?
 		return books;
 	}
 	
@@ -50,7 +52,7 @@ contract Library is Ownable {
 		// check if current user has borrowed this particular book
 		require(currentBorrowers[_bookId][msg.sender] == false, "You have already borrowed this book.");
 		
-		//mark the book as borrowerd
+		//reduce the freeCopies counter and mark who borrowed the book
 		book.freeCopies--;
 		currentBorrowers[_bookId][msg.sender] = true;
 		
